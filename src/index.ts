@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import spawn, { type SubprocessError } from 'nano-spawn';
 import task from 'tasuku';
 import { cli } from 'cleye';
@@ -49,6 +50,13 @@ const { stringify } = JSON;
 				alias: 'd',
 				description: 'Dry run mode. Will not commit or push to the remote.',
 			},
+
+			directory: {
+				type: String,
+				alias: 'D',
+				description: 'Base directory to set the packages files',
+				default: '.',
+			},
 		},
 
 		help: {
@@ -58,8 +66,10 @@ const { stringify } = JSON;
 
 	await assertCleanTree();
 
+	const {directory} = argv.flags;
+
 	const currentBranch = await getCurrentBranchOrTagName();
-	const packageJsonPath = 'package.json';
+	const packageJsonPath = path.join(directory, 'package.json');
 
 	await fs.access(packageJsonPath).catch(() => {
 		throw new Error('No package.json found in current working directory');
@@ -224,6 +234,9 @@ const { stringify } = JSON;
 						process.cwd(),
 						packageJson,
 					);
+
+					console.log(publishFiles)
+
 					if (publishFiles.length === 0) {
 						throw new Error('No publish files found');
 					}
